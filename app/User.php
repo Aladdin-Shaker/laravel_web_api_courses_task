@@ -3,15 +3,16 @@
 namespace App;
 
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
-
-use App\Course;
-use App\Role;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Notifications\Notifiable;
+use Laravel\Passport\HasApiTokens;
+use App\Course;
+use App\Events\UserCreatedEvent;
+use App\Role;
 
 class User extends Authenticatable
 {
-    use Notifiable, SoftDeletes;
+    use Notifiable, HasApiTokens, SoftDeletes;
 
     const VERIFIED_USER = '1';
     const UNVERIFIED_USER = '0';
@@ -66,4 +67,13 @@ class User extends Authenticatable
     {
         return $this->verified === User::VERIFIED_USER;
     }
+
+    /**
+     * The event map for the model.
+     *
+     * @var array
+     */
+    protected $dispatchesEvents = [
+        'created' => UserCreatedEvent::class,
+    ];
 }

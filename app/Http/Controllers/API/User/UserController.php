@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\User;
+namespace App\Http\Controllers\API\User;
 
 use App\Http\Controllers\ApiController;
 use Illuminate\Support\Facades\Storage;
@@ -9,6 +9,11 @@ use App\User;
 
 class UserController extends ApiController
 {
+    public function __construct()
+    {
+        $this->middleware('auth:api');
+        $this->middleware('checkAdmin');
+    }
 
     // show all users verified and unverified
     public function index()
@@ -29,30 +34,6 @@ class UserController extends ApiController
     {
         $users = User::where('verified', 0)->get();
         return $this->showAll($users);
-    }
-
-    // create new user
-    public function store(Request $request)
-    {
-        $rules = [
-            'name' => 'required|string',
-            'email' => 'required|email|unique:users',
-            'password' => 'required|min:6|confirmed',
-            'image' => 'required|image|mimes:jpeg,png,gif,webp|max:2048'
-        ];
-        $this->validate($request, $rules);
-        $data = $request->all();
-        $data['password'] = bcrypt($request->password);
-        $date['verified'] = User::UNVERIFIED_USER;
-        // $date['image'] = $request->image->store('');
-
-        // image
-        $imageName = time() . uniqid() . '.' . $request->image->extension();
-        $request->image->move(public_path('img'), $imageName);
-        $data['image'] = $imageName;
-
-        $user = User::create($data);
-        return $this->showOne($user);
     }
 
     // show specific user

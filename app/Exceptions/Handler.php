@@ -8,7 +8,7 @@ use Illuminate\Auth\AuthenticationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
-use Illuminate\Support\Facades\Config;
+use Illuminate\Session\TokenMismatchException;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
@@ -113,6 +113,11 @@ class Handler extends ExceptionHandler
             }
         }
 
+        // handle exception if token not valid for csrf security
+        if ($exception instanceof TokenMismatchException) {
+            return redirect()->back()->withInput($request->input());
+        }
+
         // handle an expected exception like call fail in any moment
         // any exception does'nt match with any of above conditions
         // if we are codding/debugging we want to show the error for the developer
@@ -130,12 +135,30 @@ class Handler extends ExceptionHandler
     protected function convertValidationExceptionToResponse(ValidationException $e, $request)
     {
         $errors = $e->validator->errors()->getMessages();
+        // here we send request from web but as ajax request so we should return special error response
+        if ($this->isFrontEnd($request)) {
+            return $request->ajax() ? response()->json($errors, 422) : redirect()
+                ->back()
+                ->withInput($request->input())
+                ->withErrors($errors);
+        }
         return $this->errorResponse($errors, 422);
     }
 
     // handle the unauthuticaton request
     protected function unauthenticated($request, AuthenticationException $exception)
     {
+        // check request comming from
+        if ($this->isFrontEnd($request)) {
+            return redirect()->guest('login');
+        }
         return $this->errorResponse('Unauthenticated', 401);
+    }
+
+    // check if the request comming from web or API
+    private function isFrontEnd($request)
+    {
+        // if the request has accept HTML and contain web middleware ===> its web request
+        return $request->acceptsHtml() && collect($request->route()->middleware())->contains('web');
     }
 }

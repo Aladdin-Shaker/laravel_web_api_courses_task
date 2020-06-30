@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Course;
+namespace App\Http\Controllers\API\Course;
 
 use App\Course;
 use App\Http\Controllers\ApiController;
@@ -8,6 +8,12 @@ use Illuminate\Http\Request;
 
 class CourseController extends ApiController
 {
+
+    public function __construct()
+    {
+        $this->middleware('auth:api')->except(['getAvailableCourses']);
+        $this->middleware('checkAdmin')->except('getAvailableCourses');
+    }
 
     // get all courses available and disabled
     public function index()
@@ -51,12 +57,13 @@ class CourseController extends ApiController
         return $this->showOne($course, 201);
     }
 
+    // show one course
     public function show(Course $course)
     {
         return $this->showOne($course);
     }
 
-
+    // update a course
     public function update(Request $request, Course $course)
     {
         $rules = [
@@ -91,6 +98,7 @@ class CourseController extends ApiController
         return $this->showOne($course);
     }
 
+    // delete a course
     public function destroy(Course $course)
     {
         $course->delete();

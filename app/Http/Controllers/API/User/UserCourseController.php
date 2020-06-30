@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\User;
+namespace App\Http\Controllers\API\User;
 
 use App\Course;
 use App\Http\Controllers\ApiController;
@@ -9,6 +9,13 @@ use Illuminate\Http\Request;
 
 class UserCourseController extends ApiController
 {
+    public function __construct()
+    {
+        $this->middleware('auth:api');
+        $this->middleware('checkAdmin')->only('index');
+        $this->middleware('checkTeacher')->except('index');
+    }
+
     // get all courses related to specific student
     public function index(User $user)
     {
@@ -18,7 +25,6 @@ class UserCourseController extends ApiController
         }
         return $this->showAll($courses);
     }
-
 
     // add relationship between exist user and exist course M:M and add score value
     // if a teacher want to update a specific student score for specific course

@@ -51,6 +51,7 @@ class DatabaseSeeder extends Seeder
         foreach ($users as $user) {
             $roles_ids = [];
             $roles_ids[] = Role::all()->random()->id;
+
             $user->roles()->sync($roles_ids);
         }
     }

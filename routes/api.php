@@ -14,22 +14,32 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
+// Auth
+Route::post('login', 'API\Auth\AuthController@login')->name('login');
+Route::post('register', 'API\Auth\AuthController@register')->name('register');
+
+Route::group(['middleware' => ['auth:api']], function () {
+    Route::get('logout', 'API\Auth\AuthController@logout')->name('logout');;
+    Route::get('user', 'API\Auth\AuthController@details')->name('user');;
+});
+
 // User
-Route::get('users/verified', 'User\UserController@verified')->name('verified');;
-Route::get('users/unverified', 'User\UserController@unverified')->name('unverified');;
-Route::resource('users', 'User\UserController', ['except' => ['create', 'edit']]);
-Route::resource('users.courses', 'User\UserCourseController',  ['only' => ['index', 'update']]);
+Route::get('users/verified', 'API\User\UserController@verified')->name('verified');;
+Route::get('users/unverified', 'API\User\UserController@unverified')->name('unverified');;
+Route::resource('users', 'API\User\UserController', ['except' => ['create', 'edit', 'store']]);
+Route::resource('users.courses', 'API\User\UserCourseController',  ['only' => ['index', 'update']]);
 
 // Course
-Route::get('courses/available', 'Course\CourseController@getAvailableCourses')->name('available');
-Route::get('courses/disabled', 'Course\CourseController@getDisabledCourses')->name('disable');
-Route::resource('courses', 'Course\CourseController', ['except' => ['create', 'edit']]);
-Route::resource('courses.sections', 'Course\CourseSectionController', ['except' => ['create', 'edit']]);
-Route::resource('courses.users', 'Course\CourseUserController', ['only' => ['index', 'update', 'destroy']]);
+Route::put('courses/{course}/users/{user}/enroll', 'API\Course\CourseUserController@enrollUser')->name('enrollUser');
+Route::get('courses/available', 'API\Course\CourseController@getAvailableCourses')->name('available');
+Route::get('courses/disabled', 'API\Course\CourseController@getDisabledCourses')->name('disable');
+Route::resource('courses', 'API\Course\CourseController', ['except' => ['create', 'edit']]);
+Route::resource('courses.sections', 'API\Course\CourseSectionController', ['except' => ['create', 'edit']]);
+Route::resource('courses.users', 'API\Course\CourseUserController', ['only' => ['index', 'update', 'destroy']]);
 
 // Section
-Route::resource('sections', 'Section\SectionController', ['only' => ['index', 'show']]);
-Route::resource('sections.activities', 'Section\SectionActivityController', ['except' => ['create', 'edit']]);
+Route::resource('sections', 'API\Section\SectionController', ['only' => ['index', 'show']]);
+Route::resource('sections.activities', 'API\Section\SectionActivityController', ['except' => ['create', 'edit']]);
 
 // Activity
-Route::resource('activities', 'Activity\ActivityController', ['only' => ['index', 'show', 'destroy']]);
+Route::resource('activities', 'API\Activity\ActivityController', ['only' => ['index', 'show', 'destroy']]);

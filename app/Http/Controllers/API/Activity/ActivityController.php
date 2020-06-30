@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Activity;
+namespace App\Http\Controllers\API\Activity;
 
 use App\Activity;
 use App\Http\Controllers\ApiController;
@@ -8,6 +8,13 @@ use Illuminate\Http\Request;
 
 class ActivityController extends ApiController
 {
+
+    public function __construct()
+    {
+        $this->middleware('auth:api');
+        $this->middleware('checkAdmin')->only('destroy');
+    }
+
     // get all activities
     public function index()
     {

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Section;
+namespace App\Http\Controllers\API\Section;
 
 use App\Http\Controllers\ApiController;
 use App\Section;

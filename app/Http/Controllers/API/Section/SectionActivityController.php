@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Section;
+namespace App\Http\Controllers\API\Section;
 
 use App\Section;
 use App\Activity;
@@ -10,6 +10,11 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class SectionActivityController extends ApiController
 {
+    public function __construct()
+    {
+        $this->middleware('auth:api');
+        $this->middleware('checkAdmin')->except(['index', 'show']);
+    }
 
     // get all activities related to specific section
     public function index(Section $section)

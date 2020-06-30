@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Course;
+namespace App\Http\Controllers\API\Course;
 
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use App\Http\Controllers\ApiController;
@@ -10,6 +10,11 @@ use App\Section;
 
 class CourseSectionController extends ApiController
 {
+    public function __construct()
+    {
+        $this->middleware('auth:api')->except('index', 'show');
+        $this->middleware('checkAdmin')->only(['store', 'update', 'destroy']);
+    }
 
     // get all sections releted to specific course
     public function index(Course $course)
