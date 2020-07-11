@@ -26,25 +26,40 @@ class UserCourseController extends ApiController
         return $this->showAll($courses);
     }
 
-    // add relationship between exist user and exist course M:M and add score value
-    // if a teacher want to update a specific student score for specific course
+    // if a teacher/admin want to update a specific student score for specific course
     public function update(Request $request, User $user, Course $course)
     {
-        $rules = [
-            'score' => 'required|numeric|min:0|max:100'
-        ];
 
-        $this->validate($request, $rules);
+        /* ($request->user()->roles->where('role',  'teacher') && $request->user()->courses->contains($course->id))
+            || ($request->user()->roles->whereIn('role', ['admin'])) */
 
-        if (!$course->users()->find($user->id)) {
-            return $this->errorResponse('The specified student did not enroll this course', 404);
+        $admin = $request->user()->roles->contains('role', 'admin');
+        $teacher = $request->user()->roles->contains('role',  'teacher');
+        $teacherWithCourse = $request->user()->courses->contains($course->id);
+
+        if (($admin) or ($teacher && $teacherWithCourse)) {
+            if ($user->roles->whereIn('role', 'student')->isNotEmpty()) {
+                $rules = [
+                    'score' => 'required|numeric|min:0|max:100'
+                ];
+
+                $this->validate($request, $rules);
+
+                if (!$course->users()->find($user->id)) {
+                    return $this->errorResponse('The specified student did not enroll this course', 404);
+                }
+
+                if ($course->status == 0) {
+                    return $this->errorResponse('Selected Course, is not available currently', 404);
+                }
+
+                $user->courses()->syncWithoutDetaching([$course->id => ['score' => $request->score]]);
+                return $this->showAll($user->courses);
+            } else {
+                return $this->errorResponse('This user is not a student', 401);
+            }
+        } else {
+            return $this->errorResponse('Unauthorized teacher for this course', 401);
         }
-
-        if ($course->status == 0) {
-            return $this->errorResponse('Selected Course, is not available currently', 404);
-        }
-
-        $user->courses()->syncWithoutDetaching([$course->id => ['score' => $request->score]]);
-        return $this->showAll($user->courses);
     }
 }

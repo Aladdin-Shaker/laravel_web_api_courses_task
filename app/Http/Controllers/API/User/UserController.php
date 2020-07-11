@@ -12,7 +12,7 @@ class UserController extends ApiController
     public function __construct()
     {
         $this->middleware('auth:api');
-        $this->middleware('checkAdmin');
+        $this->middleware('checkAdmin')->except(['update']);
     }
 
     // show all users verified and unverified
@@ -45,6 +45,8 @@ class UserController extends ApiController
     // update specific user
     public function update(Request $request, User $user)
     {
+        // dd($user->id, $request->user()->id);
+        // dd($request->header("Authorization"));
         $rules = [
             'name' => 'string',
             'email' => 'email|unique:users,email,' . $user->id, // unique except the own user email
@@ -52,31 +54,35 @@ class UserController extends ApiController
             'image' => 'image|mimes:jpeg,png,gif,webp|max:2048'
         ];
 
-        $this->validate($request, $rules);
-        if ($request->has('name')) {
-            $user->name = $request->name;
-        }
+        if ($user->id === $request->user()->id) {
+            $this->validate($request, $rules);
+            if ($request->has('name')) {
+                $user->name = $request->name;
+            }
 
-        if ($request->has('email') && $user->email !== $request->email) {
-            $user->verified = User::UNVERIFIED_USER;
-            $user->email_verified_at = null;
-            $user->email = $request->email;
-        }
+            if ($request->has('email') && $user->email !== $request->email) {
+                $user->verified = User::UNVERIFIED_USER;
+                $user->email_verified_at = null;
+                $user->email = $request->email;
+            }
 
-        if ($request->has('password')) {
-            $user->password = bcrypt($request->password);
-        }
+            if ($request->has('password')) {
+                $user->password = bcrypt($request->password);
+            }
 
-        if ($request->has('image')) {
-            Storage::delete($user->image);
-            $user->image = $request->image->store('');
-        }
+            if ($request->has('image')) {
+                Storage::delete($user->image);
+                $user->image = $request->image->store('');
+            }
 
-        if (!$user->isDirty()) {
-            return $this->errorResponse('You need to specify a different value to update', 409);
+            if (!$user->isDirty()) {
+                return $this->errorResponse('You need to specify a different value to update', 409);
+            }
+            $user->save();
+            return $this->showOne($user);
+        } else {
+            return $this->errorResponse('Unauthorized to update this user', 401);
         }
-        $user->save();
-        return $this->showOne($user);
     }
 
     // delete specific user

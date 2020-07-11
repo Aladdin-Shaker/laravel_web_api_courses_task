@@ -30,21 +30,27 @@ class CourseUserController extends ApiController
     // if a user/student enrolled to this course  => access controle :user
     public function enrollUser(Course $course, User $user)
     {
-        if ($course->status == 0) {
-            return $this->errorResponse('Cannot enroll in this course, is not available currently', 404);
+        if (($user->id === request()->user()->id) && (request()->user()->roles->contains('role',  'student'))) {
+
+            if (request()->user->role)
+                if ($course->status == 0) {
+                    return $this->errorResponse('Cannot enroll in this course, is not available currently', 404);
+                }
+
+            $this->checkEnroll($course, $user);
+
+            $course->users()->syncWithoutDetaching([$user->id]);
+            return $this->showAll($course->users);
+        } else {
+            return $this->errorResponse('Unauthorized to enroll this course', 401);
         }
-
-        $this->checkEnroll($course, $user);
-
-        $course->users()->syncWithoutDetaching([$user->id]);
-        return $this->showAll($course->users);
     }
 
     //  assign a user/teacher to specific course  => access controle :admin
     public function update(Request $request, Course $course, User $user)
     {
         if ($course->status == 0) {
-            return $this->errorResponse('Cannot assign a teacher to this course, is not available currently', 404);
+            return $this->errorResponse('Cannot assign a teacher to this course, the course is not available currently', 404);
         }
 
         $this->checkAssign($course, $user);
@@ -57,7 +63,7 @@ class CourseUserController extends ApiController
     public function destroy(Course $course, User $user)
     {
         if (!$course->users()->find($user->id)) {
-            return $this->errorResponse('The specified student, does not have this course', 404);
+            return $this->errorResponse('The specified student, does not enroll this course', 404);
         }
 
         $course->users()->detach($user->id);
